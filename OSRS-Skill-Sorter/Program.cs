@@ -49,12 +49,18 @@ while ((line = reader.ReadLine()!) != null)
     index++;
 }
 
-Console.WriteLine("-- Sorted Skills --");
+var separatorWidth = 3;
+var skillsTitle = " Sorted Skills ";
+var activitiesTitle = " Sorted Activities ";
+
 var skills = scores.Where(score => score.Type == ScoreType.Skill).OrderByDescending(score => score.Experience);
 var skillNameWidth = Math.Max("Skill".Length, skills.Max(skill => skill.Name.Length));
 var levelWidth = Math.Max("Level".Length, skills.Max(skill => skill.Level.ToString()!.Length));
 var expWidth = Math.Max("Experience".Length, skills.Max(skill => skill.Experience.ToString()!.Length));
-Console.WriteLine($"{"Skill".PadRight(skillNameWidth)} | {"Level".PadRight(levelWidth)} | {"Experience".PadRight(expWidth)}");
+var overallSkillsWidth = skillNameWidth + levelWidth + expWidth + separatorWidth * 2;
+
+Console.WriteLine(CenterString(skillsTitle, overallSkillsWidth, '-'));
+Console.WriteLine($"{CenterString("Skill", skillNameWidth, ' ')} | {"Level".PadRight(levelWidth)} | {"Experience".PadRight(expWidth)}");
 Console.WriteLine($"{new string('-', skillNameWidth)}-|-{new string('-', levelWidth)}-|-{new string('-', expWidth)}");
 foreach (var skill in skills)
 {
@@ -65,17 +71,27 @@ foreach (var skill in skills)
 }
 
 Console.WriteLine();
-Console.WriteLine("-- Sorted Activities --");
+
 var activities = scores.Where(score => score.Type == ScoreType.Activity).OrderByDescending(score => score.Level);
 var activityNameWidth = Math.Max("Activity".Length, activities.Max(activity => activity.Name.Length));
 var killCountWidth = Math.Max("Kill Count".Length, activities.Max(activity => activity.Level.ToString()!.Length));
-Console.WriteLine($"{"Name".PadRight(activityNameWidth)} | {"Kill Count".PadRight(killCountWidth)}");
+var overallActivityWidth = activityNameWidth + killCountWidth + separatorWidth;
+
+Console.WriteLine(CenterString(activitiesTitle, overallActivityWidth, '-'));
+Console.WriteLine($"{CenterString("Name", activityNameWidth, ' ')} | {"Kill Count".PadRight(killCountWidth)}");
 Console.WriteLine($"{new string('-', activityNameWidth)}-|-{new string('-', killCountWidth)}");
 foreach (var activity in activities)
 {
     var paddedName = activity.Name.PadRight(activityNameWidth);
     var paddedKillCount = activity.Level.ToString().PadLeft(killCountWidth);
     Console.WriteLine($"{paddedName} | {paddedKillCount}");
+}
+
+static string CenterString(string stringToCenter, int totalLength, char paddingCharacter)
+{
+    return stringToCenter.PadLeft(
+        ((totalLength - stringToCenter.Length) / 2) + stringToCenter.Length,
+          paddingCharacter).PadRight(totalLength, paddingCharacter);
 }
 
 record Score(string Name, ScoreType Type, int Rank, int Level, int? Experience);
