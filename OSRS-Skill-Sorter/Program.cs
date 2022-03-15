@@ -53,10 +53,12 @@ var separatorWidth = 3;
 var skillsTitle = " Sorted Skills ";
 var activitiesTitle = " Sorted Activities ";
 
-var skills = scores.Where(score => score.Type == ScoreType.Skill).OrderByDescending(score => score.Experience);
+var skills = scores.Where(score => score.Type == ScoreType.Skill)
+    .OrderByDescending(score => score.Experience)
+    .ThenBy(score => score.Name);
 var skillNameWidth = Math.Max("Skill".Length, skills.Max(skill => skill.Name.Length));
-var levelWidth = Math.Max("Level".Length, skills.Max(skill => skill.Level.ToString()!.Length));
-var expWidth = Math.Max("Experience".Length, skills.Max(skill => skill.Experience.ToString()!.Length));
+var levelWidth = Math.Max("Level".Length, skills.Max(skill => skill.FriendlyLevel.Length));
+var expWidth = Math.Max("Experience".Length, skills.Max(skill => skill.FriendlyExperience.Length));
 var overallSkillsWidth = skillNameWidth + levelWidth + expWidth + separatorWidth * 2;
 
 Console.WriteLine(CenterString(skillsTitle, overallSkillsWidth, '-'));
@@ -65,16 +67,18 @@ Console.WriteLine($"{new string('-', skillNameWidth)}-|-{new string('-', levelWi
 foreach (var skill in skills)
 {
     var paddedName = skill.Name.PadRight(skillNameWidth);
-    var paddedLevel = skill.Level.ToString().PadLeft(levelWidth);
-    var paddedExp = skill.Experience.ToString()!.PadLeft(expWidth);
+    var paddedLevel = skill.FriendlyLevel.PadLeft(levelWidth);
+    var paddedExp = skill.FriendlyExperience.PadLeft(expWidth);
     Console.WriteLine($"{paddedName} | {paddedLevel} | {paddedExp}");
 }
 
 Console.WriteLine();
 
-var activities = scores.Where(score => score.Type == ScoreType.Activity).OrderByDescending(score => score.Level);
+var activities = scores.Where(score => score.Type == ScoreType.Activity)
+    .OrderByDescending(score => score.Level)
+    .ThenBy(score => score.Name);
 var activityNameWidth = Math.Max("Activity".Length, activities.Max(activity => activity.Name.Length));
-var killCountWidth = Math.Max("Kill Count".Length, activities.Max(activity => activity.Level.ToString()!.Length));
+var killCountWidth = Math.Max("Kill Count".Length, activities.Max(activity => activity.FriendlyScore.Length));
 var overallActivityWidth = activityNameWidth + killCountWidth + separatorWidth;
 
 Console.WriteLine(CenterString(activitiesTitle, overallActivityWidth, '-'));
@@ -83,7 +87,7 @@ Console.WriteLine($"{new string('-', activityNameWidth)}-|-{new string('-', kill
 foreach (var activity in activities)
 {
     var paddedName = activity.Name.PadRight(activityNameWidth);
-    var paddedKillCount = activity.Level.ToString().PadLeft(killCountWidth);
+    var paddedKillCount = activity.FriendlyScore.PadLeft(killCountWidth);
     Console.WriteLine($"{paddedName} | {paddedKillCount}");
 }
 
@@ -94,7 +98,23 @@ static string CenterString(string stringToCenter, int totalLength, char paddingC
           paddingCharacter).PadRight(totalLength, paddingCharacter);
 }
 
-record Score(string Name, ScoreType Type, int Rank, int Level, int? Experience);
+record Score(string Name, ScoreType Type, int Rank, int Level, int? Experience)
+{
+    public string FriendlyScore
+    {
+        get => this.Experience is null ? this.FriendlyLevel : this.FriendlyExperience;
+    }
+
+    public string FriendlyLevel
+    {
+        get => this.Level == -1 ? "Unknown" : this.Level.ToString();
+    }
+
+    public string FriendlyExperience
+    {
+        get => this.Experience is null || this.Experience == -1 ? "Unknown" : this.Experience.Value.ToString();
+    }
+}
 
 enum ScoreType
 {
