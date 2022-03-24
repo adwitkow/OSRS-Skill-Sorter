@@ -4,7 +4,9 @@ namespace OsrsSkillSorter
 {
     public class ScoreTable
     {
-        private const int SeparatorWidth = 3;
+        private const string LeftSeparator = "| ";
+        private const string RightSeparator = " |";
+        private const string MiddleSeparator = " | ";
 
         public IEnumerable<Score> Scores { get; }
 
@@ -44,26 +46,53 @@ namespace OsrsSkillSorter
                 .OrderByDescending(this.OrderBy)
                 .ThenBy(score => score.Name)
                 .ToList();
-            var overallWidth = this.Columns.Sum(column => column.Width) + (SeparatorWidth * (this.Columns.Count - 1));
+
+            var middleSeparatorWidth = MiddleSeparator.Length;
+            var leftSeparatorWidth = LeftSeparator.Length;
+            var rightSeparatorWidth = RightSeparator.Length;
+
+            var overallWidth = CalculateTableWidth(middleSeparatorWidth, leftSeparatorWidth, rightSeparatorWidth);
 
             var builder = new StringBuilder();
 
             var tableTitleLine = CenterString(this.Title, overallWidth, '-');
             builder.AppendLine(tableTitleLine);
 
-            var formattedHeaders = this.Columns.Select(column => CenterString(column.Name, column.Width, ' '));
-            var headerLine = string.Join(" | ", formattedHeaders);
+            var formattedHeaders = FormatColumnHeaders();
+            var headerLine = CreateValuesLine(formattedHeaders);
             builder.AppendLine(headerLine);
             builder.AppendLine(new string('-', overallWidth));
 
             foreach (var score in orderedScores)
             {
-                var formattedValues = this.Columns.Select(column => column.Property(score).PadRight(column.Width));
-                var valuesLine = string.Join(" | ", formattedValues);
+                var formattedValues = FormatScoreValues(score);
+                var valuesLine = CreateValuesLine(formattedValues);
                 builder.AppendLine(valuesLine);
             }
 
+            builder.AppendLine(new string('-', overallWidth));
+
             return builder.ToString();
+        }
+
+        private IEnumerable<string> FormatScoreValues(Score score)
+        {
+            return this.Columns.Select(column => column.Property(score).PadRight(column.Width));
+        }
+
+        private IEnumerable<string> FormatColumnHeaders()
+        {
+            return this.Columns.Select(column => CenterString(column.Name, column.Width, ' '));
+        }
+
+        private int CalculateTableWidth(int middleSeparatorWidth, int leftSeparatorWidth, int rightSeparatorWidth)
+        {
+            return this.Columns.Sum(column => column.Width) + (middleSeparatorWidth * (this.Columns.Count - 1)) + leftSeparatorWidth + rightSeparatorWidth;
+        }
+
+        private static string CreateValuesLine(IEnumerable<string> formattedValues)
+        {
+            return LeftSeparator + string.Join(MiddleSeparator, formattedValues) + RightSeparator;
         }
 
         private static string CenterString(string stringToCenter, int totalLength, char paddingCharacter)
